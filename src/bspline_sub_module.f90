@@ -603,31 +603,50 @@
     real(wp),dimension(ky,kz)              :: temp1
     real(wp),dimension(kz)                 :: temp2
     real(wp),dimension(3*max(kx,ky,kz))    :: work
+    real(wp) :: xv, yv, zv
 
     integer :: lefty, leftz, mflag,&
                 kcoly, kcolz, j, k
 
     f = 0.0_wp
 
-    if (xval<tx(1) .or. xval>tx(nx+kx)) then
+    if (xval<tx(1)-10*spacing(xval) .or. xval>tx(nx+kx)+10*spacing(xval)) then
         write(error_unit,'(A)') 'db3val - x value out of bounds'
         iflag = 1
         return
+    else if (xval<tx(1)) then
+        xv = tx(1)
+    else if (xval>tx(nx+kx)) then
+        xv = tx(nx+kx)
+    else
+        xv = xval
     end if
-    if (yval<ty(1) .or. yval>ty(ny+ky)) then
+    if (yval<ty(1)-10*spacing(yval) .or. yval>ty(ny+ky)+10*spacing(yval)) then
         write(error_unit,'(A)') 'db3val - y value out of bounds'
         iflag = 2
         return
+    else if (yval<ty(1)) then
+        yv = ty(1)
+    else if (yval>ty(ny+ky)) then
+        yv = ty(ny+ky)
+    else
+        yv = yval
     end if
-    if (zval<tz(1) .or. zval>tz(nz+kz)) then
+    if (zval<tz(1)-10*spacing(zval) .or. zval>tz(nz+kz)+10*spacing(zval)) then
         write(error_unit,'(A)') 'db3val - z value out of bounds'
         iflag = 3
         return
+    else if (zval<tz(1)) then
+        zv = tz(1)
+    else if (zval>tz(nz+kz)) then
+        zv = tz(nz+kz)
+    else
+        zv = zval
     end if
 
     iflag = -1
-    call dintrv(ty,ny+ky,yval,iloy,lefty,mflag); if (mflag /= 0) return
-    call dintrv(tz,nz+kz,zval,iloz,leftz,mflag); if (mflag /= 0) return
+    call dintrv(ty,ny+ky,yv,iloy,lefty,mflag); if (mflag /= 0) return
+    call dintrv(tz,nz+kz,zv,iloz,leftz,mflag); if (mflag /= 0) return
 
     iflag = 0
 
@@ -637,19 +656,19 @@
         kcoly = lefty - ky
         do j=1,ky
             kcoly = kcoly + 1
-            temp1(j,k) = dbvalu(tx,bcoef(:,kcoly,kcolz),nx,kx,idx,xval,inbvx,work,iflag)
+            temp1(j,k) = dbvalu(tx,bcoef(:,kcoly,kcolz),nx,kx,idx,xv,inbvx,work,iflag)
             if (iflag/=0) return
         end do
     end do
 
     kcoly = lefty - ky + 1
     do k=1,kz
-        temp2(k) = dbvalu(ty(kcoly:),temp1(:,k),ky,ky,idy,yval,inbvy,work,iflag)
+        temp2(k) = dbvalu(ty(kcoly:),temp1(:,k),ky,ky,idy,yv,inbvy,work,iflag)
         if (iflag/=0) return
     end do
 
     kcolz = leftz - kz + 1
-    f = dbvalu(tz(kcolz:),temp2,kz,kz,idz,zval,inbvz,work,iflag)
+    f = dbvalu(tz(kcolz:),temp2,kz,kz,idz,zv,inbvz,work,iflag)
 
     end subroutine db3val
 !*****************************************************************************************
